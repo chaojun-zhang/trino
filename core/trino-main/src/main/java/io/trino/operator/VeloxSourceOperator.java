@@ -15,18 +15,46 @@ package io.trino.operator;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import io.trino.memory.context.LocalMemoryContext;
+import io.trino.metadata.Split;
 import io.trino.spi.Page;
+import io.trino.spi.block.Block;
+import io.trino.spi.connector.UpdatablePageSource;
 import io.trino.spi.metrics.Metrics;
 import io.trino.sql.planner.plan.PlanNodeId;
+import io.trino.velox.Task;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.lucene.util.IOUtils;
+
+import java.util.Optional;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkState;
+import static io.trino.spi.block.RowBlock.fromFieldBlocks;
 import static java.util.Objects.requireNonNull;
 
 public class VeloxSourceOperator
-        implements Operator {
+        implements SourceOperator {
+
+    @Override
+    public PlanNodeId getSourceId() {
+        return planNodeId;
+    }
+
+    @Override
+    public Supplier<Optional<UpdatablePageSource>> addSplit(Split split) {
+        return null;
+    }
+
+    @Override
+    public void noMoreSplits() {
+
+
+    }
+
 
     public static class VeloxOperatorFactory
-            implements OperatorFactory {
+            implements SourceOperatorFactory {
         private final int operatorId;
         private final PlanNodeId planNodeId;
         private boolean closed;
@@ -40,7 +68,12 @@ public class VeloxSourceOperator
 
 
         @Override
-        public Operator createOperator(DriverContext driverContext) {
+        public PlanNodeId getSourceId() {
+            return planNodeId;
+        }
+
+        @Override
+        public SourceOperator createOperator(DriverContext driverContext) {
             checkState(!closed, "Factory is already closed");
             OperatorContext operatorContext = driverContext.addOperatorContext(operatorId, planNodeId, "VeloxSourceOperator");
             return new VeloxSourceOperator(
@@ -62,8 +95,11 @@ public class VeloxSourceOperator
 
     private final OperatorContext operatorContext;
     private final PlanNodeId planNodeId;
+    private final static BufferAllocator ROOT_ALLOCATOR = new RootAllocator();
 
     private final LocalMemoryContext systemMemoryContext;
+
+    private final Task veloxTask;
 
 
     private boolean finished;
@@ -74,6 +110,7 @@ public class VeloxSourceOperator
         this.operatorContext = requireNonNull(operatorContext, "operatorContext is null");
         this.planNodeId = requireNonNull(planNodeId, "planNodeId is null");
         this.systemMemoryContext = operatorContext.newLocalSystemMemoryContext(VeloxSourceOperator.class.getSimpleName());
+        veloxTask = Task.make();
     }
 
     @Override
@@ -90,11 +127,16 @@ public class VeloxSourceOperator
     @Override
     public void finish() {
         finished = true;
+        try {
+            veloxTask.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean isFinished() {
-        return finished;
+        return finished || veloxTask.isFinished();
     }
 
     @Override
@@ -112,26 +154,31 @@ public class VeloxSourceOperator
         throw new UnsupportedOperationException(getClass().getName() + " cannot take input");
     }
 
+
+    private Page getNextPage() {
+        Task.ColumnBatch batch = veloxTask.nextBatch(ROOT_ALLOCATOR);
+        Block byteArrayBlock = BlockAssertions.createByteArraySequenceBlock(0, 10);
+        Block longArrayBlock = BlockAssertions.createLongSequenceBlock(0, 10);
+        Block byteArrayBlock1 = BlockAssertions.createByteArraySequenceBlock(0, 10);
+        Block longArrayBlock1 = BlockAssertions.createLongSequenceBlock(0, 10);
+        Block block = fromFieldBlocks(1, Optional.empty(), new Block[]{longArrayBlock, byteArrayBlock, longArrayBlock1, byteArrayBlock1});
+        return new Page(block);
+    }
+
     @Override
     public Page getOutput() {
-
-        Page page = source.getNextPage();
-        if (page != null) {
-            // assure the page is in memory before handing to another operator
-            page = page.getLoadedPage();
-
-            // update operator stats
-            operatorContext.recordPhysicalInputWithTiming(
-                    page.getSizeInBytes(),
-                    page.getPositionCount(),
-                    0);
-            operatorContext.recordProcessedInput(page.getSizeInBytes(), page.getPositionCount());
-
-        }
+        Page page = getNextPage();
+        // update operator stats
+        operatorContext.recordPhysicalInputWithTiming(
+                page.getSizeInBytes(),
+                page.getPositionCount(),
+                0);
+        operatorContext.recordProcessedInput(page.getSizeInBytes(), page.getPositionCount());
 
         // updating system memory usage should happen after page is loaded.
         systemMemoryContext.setBytes(0);
         operatorContext.setLatestMetrics(Metrics.EMPTY);
+        finish();
         return page;
     }
 }
