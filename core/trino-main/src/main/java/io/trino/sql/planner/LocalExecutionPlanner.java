@@ -90,6 +90,7 @@ import io.trino.operator.TopNOperator;
 import io.trino.operator.TopNRankingOperator;
 import io.trino.operator.UpdateOperator.UpdateOperatorFactory;
 import io.trino.operator.ValuesOperator.ValuesOperatorFactory;
+import io.trino.operator.VeloxSourceOperator;
 import io.trino.operator.WindowFunctionDefinition;
 import io.trino.operator.WindowOperator.WindowOperatorFactory;
 import io.trino.operator.WorkProcessorPipelineSourceOperator;
@@ -3166,7 +3167,7 @@ public class LocalExecutionPlanner
             return new PhysicalOperation(operatorFactory, layout, context, UNGROUPED_EXECUTION);
         }
 
-        private PhysicalOperation createLocalExchange(ExchangeNode node, LocalExecutionPlanContext context)
+        protected PhysicalOperation createLocalExchange(ExchangeNode node, LocalExecutionPlanContext context)
         {
             int driverInstanceCount;
             if (node.getType() == ExchangeNode.Type.GATHER) {
@@ -3194,7 +3195,12 @@ public class LocalExecutionPlanner
                 PlanNode sourceNode = node.getSources().get(i);
 
                 LocalExecutionPlanContext subContext = context.createSubContext();
-                PhysicalOperation source = sourceNode.accept(this, subContext);
+
+
+                PhysicalOperation source = new PhysicalOperation(new VeloxSourceOperator.VeloxOperatorFactory(context.getNextOperatorId(), sourceNode.getId()),makeLayout(sourceNode),subContext,UNGROUPED_EXECUTION);
+//
+//
+//                PhysicalOperation source = sourceNode.accept(this, subContext);
                 driverFactoryParametersList.add(new DriverFactoryParameters(subContext, source));
 
                 if (source.getPipelineExecutionStrategy() == UNGROUPED_EXECUTION) {
