@@ -13,20 +13,13 @@
  */
 package io.trino.operator;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import io.trino.memory.context.LocalMemoryContext;
-import io.trino.metadata.Split;
 import io.trino.spi.Page;
 import io.trino.spi.metrics.Metrics;
-import io.trino.split.PageSourceProvider;
 import io.trino.sql.planner.plan.PlanNodeId;
 
-import javax.annotation.Nullable;
-
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static java.util.Objects.requireNonNull;
 
 public class VeloxSourceOperator
@@ -71,10 +64,7 @@ public class VeloxSourceOperator
     private final PlanNodeId planNodeId;
 
     private final LocalMemoryContext systemMemoryContext;
-    private final SettableFuture<Void> blocked = SettableFuture.create();
 
-    @Nullable
-    private Split split;
 
     private boolean finished;
 
@@ -110,10 +100,6 @@ public class VeloxSourceOperator
     @Override
     public ListenableFuture<Void> isBlocked() {
         return NOT_BLOCKED;
-    }
-
-    private static <T> ListenableFuture<Void> asVoid(ListenableFuture<T> future) {
-        return Futures.transform(future, v -> null, directExecutor());
     }
 
     @Override
