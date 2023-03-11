@@ -24,7 +24,7 @@ import io.trino.sql.planner.plan.PlanNodeId;
 import io.trino.velox.Task;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
-import org.apache.lucene.util.IOUtils;
+import org.apache.arrow.vector.VectorSchemaRoot;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -110,7 +110,7 @@ public class VeloxSourceOperator
         this.operatorContext = requireNonNull(operatorContext, "operatorContext is null");
         this.planNodeId = requireNonNull(planNodeId, "planNodeId is null");
         this.systemMemoryContext = operatorContext.newLocalSystemMemoryContext(VeloxSourceOperator.class.getSimpleName());
-        veloxTask = Task.make();
+        veloxTask = Task.make(true);
     }
 
     @Override
@@ -136,6 +136,7 @@ public class VeloxSourceOperator
 
     @Override
     public boolean isFinished() {
+
         return finished || veloxTask.isFinished();
     }
 
@@ -156,7 +157,8 @@ public class VeloxSourceOperator
 
 
     private Page getNextPage() {
-        Task.ColumnBatch batch = veloxTask.nextBatch(ROOT_ALLOCATOR);
+
+        VectorSchemaRoot batch = veloxTask.nextBatch(ROOT_ALLOCATOR);
         Block byteArrayBlock = BlockAssertions.createByteArraySequenceBlock(0, 10);
         Block longArrayBlock = BlockAssertions.createLongSequenceBlock(0, 10);
         Block byteArrayBlock1 = BlockAssertions.createByteArraySequenceBlock(0, 10);
@@ -178,7 +180,6 @@ public class VeloxSourceOperator
         // updating system memory usage should happen after page is loaded.
         systemMemoryContext.setBytes(0);
         operatorContext.setLatestMetrics(Metrics.EMPTY);
-        finish();
         return page;
     }
 }
