@@ -104,6 +104,10 @@ public class VeloxSourceOperator
 
     private boolean finished;
 
+    static {
+        Runtime.getRuntime().addShutdownHook(new Thread(ROOT_ALLOCATOR::close));
+    }
+
     public VeloxSourceOperator(
             OperatorContext operatorContext,
             PlanNodeId planNodeId) {
@@ -111,6 +115,7 @@ public class VeloxSourceOperator
         this.planNodeId = requireNonNull(planNodeId, "planNodeId is null");
         this.systemMemoryContext = operatorContext.newLocalSystemMemoryContext(VeloxSourceOperator.class.getSimpleName());
         veloxTask = Task.make(true);
+
     }
 
     @Override
@@ -157,14 +162,15 @@ public class VeloxSourceOperator
 
 
     private Page getNextPage() {
+        try (VectorSchemaRoot batch = veloxTask.nextBatch(ROOT_ALLOCATOR)) {
+            Block byteArrayBlock = BlockAssertions.createByteArraySequenceBlock(0, 10);
+            Block longArrayBlock = BlockAssertions.createLongSequenceBlock(0, 10);
+            Block byteArrayBlock1 = BlockAssertions.createByteArraySequenceBlock(0, 10);
+            Block longArrayBlock1 = BlockAssertions.createLongSequenceBlock(0, 10);
+            Block block = fromFieldBlocks(1, Optional.empty(), new Block[]{longArrayBlock, byteArrayBlock, longArrayBlock1, byteArrayBlock1});
+            return new Page(block);
+        }
 
-        VectorSchemaRoot batch = veloxTask.nextBatch(ROOT_ALLOCATOR);
-        Block byteArrayBlock = BlockAssertions.createByteArraySequenceBlock(0, 10);
-        Block longArrayBlock = BlockAssertions.createLongSequenceBlock(0, 10);
-        Block byteArrayBlock1 = BlockAssertions.createByteArraySequenceBlock(0, 10);
-        Block longArrayBlock1 = BlockAssertions.createLongSequenceBlock(0, 10);
-        Block block = fromFieldBlocks(1, Optional.empty(), new Block[]{longArrayBlock, byteArrayBlock, longArrayBlock1, byteArrayBlock1});
-        return new Page(block);
     }
 
     @Override
