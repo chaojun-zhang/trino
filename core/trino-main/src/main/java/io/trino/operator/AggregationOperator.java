@@ -18,7 +18,10 @@ import io.trino.memory.context.LocalMemoryContext;
 import io.trino.operator.aggregation.AccumulatorFactory;
 import io.trino.spi.Page;
 import io.trino.spi.PageBuilder;
+import io.trino.spi.block.Block;
 import io.trino.spi.block.BlockBuilder;
+import io.trino.spi.block.LongArrayBlock;
+import io.trino.spi.block.RowBlock;
 import io.trino.spi.type.Type;
 import io.trino.sql.planner.plan.AggregationNode.Step;
 import io.trino.sql.planner.plan.PlanNodeId;
@@ -182,6 +185,20 @@ public class AggregationOperator
         }
 
         state = State.FINISHED;
-        return pageBuilder.build();
+        Page page =  pageBuilder.build();
+
+        if (aggregates.get(0).getStep() == Step.PARTIAL) {
+            RowBlock rowBlock = (RowBlock) page.getBlock(0);
+            Block[] fieldBlocks = rowBlock.getFieldBlocks();
+            System.out.println("column: 0,value:" + fieldBlocks[0].getLong(0, 0));
+            System.out.println("column: 1,value:" +fieldBlocks[1].getByte(0, 0));
+            System.out.println("column: 2,value:" +fieldBlocks[2].getLong(0, 0));
+            System.out.println("column: 3,value:" +fieldBlocks[3].getByte(0, 0));
+        } else if (aggregates.get(0).getStep() == Step.FINAL){
+            LongArrayBlock rowBlock = (LongArrayBlock) page.getBlock(0);
+
+            System.out.println("final step: column: 0,value:" + rowBlock.getLong(0, 0));
+        }
+        return page;
     }
 }

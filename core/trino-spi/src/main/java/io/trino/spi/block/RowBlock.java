@@ -39,6 +39,10 @@ public class RowBlock
     private volatile long sizeInBytes = -1;
     private final long retainedSizeInBytes;
 
+    public Block[] getFieldBlocks(){
+        return fieldBlocks;
+    }
+
     /**
      * Create a row block directly from columnar nulls and field blocks.
      */

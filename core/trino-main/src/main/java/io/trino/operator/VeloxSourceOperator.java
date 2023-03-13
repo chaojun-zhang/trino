@@ -20,6 +20,8 @@ import io.trino.spi.Page;
 import io.trino.spi.block.Block;
 import io.trino.spi.connector.UpdatablePageSource;
 import io.trino.spi.metrics.Metrics;
+import io.trino.spi.type.BooleanType;
+import io.trino.spi.type.DoubleType;
 import io.trino.sql.planner.plan.PlanNodeId;
 import io.trino.velox.Task;
 import org.apache.arrow.memory.BufferAllocator;
@@ -31,6 +33,7 @@ import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkState;
 import static io.trino.spi.block.RowBlock.fromFieldBlocks;
+import static io.trino.spi.type.BigintType.BIGINT;
 import static java.util.Objects.requireNonNull;
 
 public class VeloxSourceOperator
@@ -160,14 +163,13 @@ public class VeloxSourceOperator
 
     private Page getNextPage() {
         try (VectorSchemaRoot batch = veloxTask.nextBatch(ROOT_ALLOCATOR)) {
-            Block byteArrayBlock = BlockAssertions.createByteArraySequenceBlock(0, 10);
-            Block longArrayBlock = BlockAssertions.createLongSequenceBlock(0, 10);
-            Block byteArrayBlock1 = BlockAssertions.createByteArraySequenceBlock(0, 10);
-            Block longArrayBlock1 = BlockAssertions.createLongSequenceBlock(0, 10);
-            Block block = fromFieldBlocks(1, Optional.empty(), new Block[]{longArrayBlock, byteArrayBlock, longArrayBlock1, byteArrayBlock1});
+            Block longArrayBlock = BIGINT.createFixedSizeBlockBuilder(1).writeLong(1191);
+            Block boolBlock = BooleanType.BOOLEAN.createFixedSizeBlockBuilder(1).writeByte(1);
+            Block doubleBlock = DoubleType.DOUBLE.createFixedSizeBlockBuilder(1).writeLong(4697874936305107645L);
+            Block byteArrayBlock = BooleanType.BOOLEAN.createFixedSizeBlockBuilder(1).writeByte(1);
+            Block block = fromFieldBlocks(1, Optional.empty(), new Block[]{longArrayBlock, boolBlock, doubleBlock, byteArrayBlock});
             return new Page(block);
         }
-
     }
 
     @Override

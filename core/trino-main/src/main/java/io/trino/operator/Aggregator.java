@@ -28,6 +28,10 @@ class Aggregator
     private final AggregationNode.Step step;
     private final int intermediateChannel;
 
+    public AggregationNode.Step getStep(){
+        return step;
+    }
+
     Aggregator(AccumulatorFactory accumulatorFactory, AggregationNode.Step step)
     {
         if (step.isInputRaw()) {
