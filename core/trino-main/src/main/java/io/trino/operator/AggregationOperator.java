@@ -187,18 +187,18 @@ public class AggregationOperator
         state = State.FINISHED;
         Page page =  pageBuilder.build();
 
-        if (aggregates.get(0).getStep() == Step.PARTIAL) {
-            RowBlock rowBlock = (RowBlock) page.getBlock(0);
-            Block[] fieldBlocks = rowBlock.getFieldBlocks();
-            System.out.println("column: 0,value:" + fieldBlocks[0].getLong(0, 0));
-            System.out.println("column: 1,value:" +fieldBlocks[1].getByte(0, 0));
-            System.out.println("column: 2,value:" +fieldBlocks[2].getLong(0, 0));
-            System.out.println("column: 3,value:" +fieldBlocks[3].getByte(0, 0));
-        } else if (aggregates.get(0).getStep() == Step.FINAL){
-            LongArrayBlock rowBlock = (LongArrayBlock) page.getBlock(0);
-
-            System.out.println("final step: column: 0,value:" + rowBlock.getLong(0, 0));
-        }
+//        if (aggregates.get(0).getStep() == Step.PARTIAL) {
+//            RowBlock rowBlock = (RowBlock) page.getBlock(0);
+//            Block[] fieldBlocks = rowBlock.getFieldBlocks();
+//            System.out.println("column: 0,value:" + fieldBlocks[0].getLong(0, 0));
+//            System.out.println("column: 1,value:" +fieldBlocks[1].getByte(0, 0));
+//            System.out.println("column: 2,value:" +fieldBlocks[2].getLong(0, 0));
+//            System.out.println("column: 3,value:" +fieldBlocks[3].getByte(0, 0));
+//        } else if (aggregates.get(0).getStep() == Step.FINAL){
+//            LongArrayBlock rowBlock = (LongArrayBlock) page.getBlock(0);
+//
+//            System.out.println("final step: column: 0,value:" + rowBlock.getLong(0, 0));
+//        }
         return page;
     }
 }

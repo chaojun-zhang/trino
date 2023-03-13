@@ -24,7 +24,7 @@ public class SqlTpchQuery6
     {
         super(localQueryRunner, "sql_tpch_query_6", 4, 20, "" +
                 "select sum(extendedprice * discount) as revenue \n" +
-                "from lineitem \n" +
+                "from hive.tpch.lineitem \n" +
                 "where shipdate >= DATE '1994-01-01' \n" +
                 "   and shipdate < DATE '1995-01-01' \n" +
                 "   and discount >= 0.05 \n" +

@@ -2211,8 +2211,8 @@ public class LocalExecutionPlanner {
 
                 Optional<PlanNode> tableNode = searchFrom(node).where(TableScanNode.class::isInstance).findFirst();
 
-                PhysicalOperation source = new PhysicalOperation(new VeloxSourceOperator.VeloxOperatorFactory(subContext.getNextOperatorId(), tableNode.get().getId()), makeLayout(sourceNode), subContext, UNGROUPED_EXECUTION);
-//                PhysicalOperation source = sourceNode.accept(this, subContext);
+//                PhysicalOperation source = new PhysicalOperation(new VeloxSourceOperator.VeloxOperatorFactory(subContext.getNextOperatorId(), tableNode.get().getId()), makeLayout(sourceNode), subContext, UNGROUPED_EXECUTION);
+                PhysicalOperation source = sourceNode.accept(this, subContext);
                 driverFactoryParametersList.add(new DriverFactoryParameters(subContext, source));
 
                 if (source.getPipelineExecutionStrategy() == UNGROUPED_EXECUTION) {
