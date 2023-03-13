@@ -48,10 +48,7 @@ public class VeloxSourceOperator
 
     @Override
     public void noMoreSplits() {
-
-
     }
-
 
     public static class VeloxOperatorFactory
             implements SourceOperatorFactory {
