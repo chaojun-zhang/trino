@@ -29,6 +29,7 @@ import io.trino.plugin.hive.HiveSplit.BucketValidation;
 import io.trino.plugin.hive.acid.AcidTransaction;
 import io.trino.plugin.hive.orc.OrcFileWriterFactory;
 import io.trino.plugin.hive.orc.OrcPageSource;
+import io.trino.plugin.hive.parquet.ParquetPageSourceFactory;
 import io.trino.plugin.hive.util.HiveBucketing.BucketingVersion;
 import io.trino.spi.TrinoException;
 import io.trino.spi.connector.ColumnHandle;
@@ -281,6 +282,9 @@ public class HivePageSourceProvider
         Optional<BucketValidator> bucketValidator = createBucketValidator(path, bucketValidation, bucketNumber, regularAndInterimColumnMappings);
 
         for (HivePageSourceFactory pageSourceFactory : pageSourceFactories) {
+            if (!(pageSourceFactory instanceof ParquetPageSourceFactory)) {
+                continue;
+            }
             List<HiveColumnHandle> desiredColumns = toColumnHandles(regularAndInterimColumnMappings, true, typeManager);
 
             Optional<ReaderPageSource> readerWithProjections = pageSourceFactory.createPageSource(

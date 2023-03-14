@@ -25,6 +25,7 @@ import io.trino.plugin.hive.parquet.ParquetWriterConfig;
 import io.trino.spi.TrinoException;
 import io.trino.spi.connector.ConnectorSession;
 import io.trino.spi.session.PropertyMetadata;
+import org.apache.parquet.hadoop.ParquetWriter;
 
 import javax.inject.Inject;
 
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static io.airlift.units.DataSize.Unit.MEGABYTE;
 import static io.trino.plugin.base.session.PropertyMetadataUtil.dataSizeProperty;
 import static io.trino.plugin.base.session.PropertyMetadataUtil.durationProperty;
 import static io.trino.spi.StandardErrorCode.INVALID_SESSION_PROPERTY;
@@ -558,27 +560,27 @@ public final class HiveSessionProperties
 
     public static boolean isUseParquetColumnNames(ConnectorSession session)
     {
-        return session.getProperty(PARQUET_USE_COLUMN_NAME, Boolean.class);
+        return true;
     }
 
     public static boolean isParquetIgnoreStatistics(ConnectorSession session)
     {
-        return session.getProperty(PARQUET_IGNORE_STATISTICS, Boolean.class);
+        return true;
     }
 
     public static DataSize getParquetMaxReadBlockSize(ConnectorSession session)
     {
-        return session.getProperty(PARQUET_MAX_READ_BLOCK_SIZE, DataSize.class);
+        return DataSize.of(16, MEGABYTE);
     }
 
     public static DataSize getParquetWriterBlockSize(ConnectorSession session)
     {
-        return session.getProperty(PARQUET_WRITER_BLOCK_SIZE, DataSize.class);
+        return DataSize.ofBytes(ParquetWriter.DEFAULT_BLOCK_SIZE);
     }
 
     public static DataSize getParquetWriterPageSize(ConnectorSession session)
     {
-        return session.getProperty(PARQUET_WRITER_PAGE_SIZE, DataSize.class);
+        return DataSize.ofBytes(ParquetWriter.DEFAULT_PAGE_SIZE);
     }
 
     public static DataSize getMaxSplitSize(ConnectorSession session)

@@ -2161,7 +2161,7 @@ public class LocalExecutionPlanner {
             checkArgument(node.getOrderingScheme().isPresent(), "orderingScheme is absent");
             checkState(node.getSources().size() == 1, "single source is expected");
 
-            // local merge source must have a single driver
+            // local merge socurce must have a single driver
             context.setDriverInstanceCount(1);
 
             PlanNode sourceNode = getOnlyElement(node.getSources());
